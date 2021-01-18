@@ -19,8 +19,8 @@ model Link {
   category    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  ownerId     Int
-  owner       User     @relation(fields: [ownerId], references: [id])
+  User        User?    @relation(fields: [userId], references: [id])
+  userId      Int?
 }
 
 model User {
