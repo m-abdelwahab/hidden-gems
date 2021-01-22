@@ -1,5 +1,5 @@
 {
-  "name": "awesome-links",
+  "name": "hidden-gems",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,20 +8,25 @@
     "start": "next start"
   },
   "dependencies": {
-    "@prisma/client": "^2.14.0",
+    "@prisma/client": "2.15.0",
     "apollo-server-micro": "^2.19.1",
     "graphql": "^15.4.0",
-    "graphql-request": "^3.4.0",
+    "graphql-middleware": "^6.0.1",
     "graphql-shield": "^7.4.4",
+    "graphql-tag": "^2.11.0",
     "next": "10.0.5",
-    "next-auth": "^3.1.0",
+    "next-auth": "^3.2.0-canary.32",
+    "next-urql": "^2.2.0",
     "nexus": "^1.0.0",
     "react": "17.0.1",
-    "react-dom": "17.0.1"
+    "react-dom": "17.0.1",
+    "react-is": "^17.0.1",
+    "urql": "^1.11.6"
   },
   "devDependencies": {
-    "@prisma/cli": "^2.14.0",
+    "@prisma/cli": "2.15.0",
     "@tailwindcss/typography": "^0.3.1",
+    "@types/next-auth": "^3.1.21",
     "@types/node": "^14.14.20",
     "@types/react": "^17.0.0",
     "autoprefixer": "^10.2.0",

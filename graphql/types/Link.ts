@@ -1,5 +1,7 @@
 import { intArg, nonNull, objectType, stringArg } from "nexus";
 import { extendType } from "nexus";
+import prisma from "lib/prisma";
+
 
 export const Link = objectType({
   name: "Link",
@@ -20,7 +22,7 @@ export const LinksQuery = extendType({
     t.nonNull.list.field("links", {
       type: "Link",
       resolve(_parent, _args, ctx) {
-        return ctx.prisma.link.findMany({});
+        return prisma.link.findMany({});
       },
     });
   },
@@ -33,7 +35,7 @@ export const LinkByIDQuery = extendType({
       type: "Link",
       args: { id: nonNull(intArg()) },
       resolve(_parent, args, ctx) {
-        return ctx.prisma.link.findUnique({
+        return prisma.link.findUnique({
           where: {
             id: args.id,
           },
@@ -42,6 +44,7 @@ export const LinkByIDQuery = extendType({
     });
   },
 });
+
 // create link
 export const CreateLinkMutation = extendType({
   type: "Mutation",
@@ -56,7 +59,7 @@ export const CreateLinkMutation = extendType({
         description: nonNull(stringArg()),
       },
       resolve(_parent, args, ctx) {
-        return ctx.prisma.link.create({
+        return prisma.link.create({
           data: {
             title: args.title,
             url: args.url,
@@ -84,7 +87,7 @@ export const UpdateLinkMutation = extendType({
         description: stringArg(),
       },
       resolve(_parent, args, ctx) {
-        return ctx.prisma.link.update({
+        return prisma.link.update({
           where: { id: args.id },
           data: {
             title: args.title,
@@ -108,10 +111,13 @@ export const DeleteLinkMutation = extendType({
         id: nonNull(intArg()),
       },
       resolve(_parent, args, ctx) {
-        return ctx.prisma.link.delete({
+ 
+        return prisma.link.delete({
           where: { id: args.id },
         });
       },
     });
   },
 });
+
+

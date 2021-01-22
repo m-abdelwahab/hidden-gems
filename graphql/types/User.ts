@@ -1,6 +1,8 @@
 import { enumType, intArg, nonNull, objectType } from "nexus";
 import { extendType } from "nexus";
 import { Link } from "./Link";
+import prisma from "lib/prisma";
+
 
 export const User = objectType({
   name: "User",
@@ -12,8 +14,8 @@ export const User = objectType({
     t.field("role", { type: Role });
     t.list.field("favorites", {
       type: Link,
-      resolve(_parent, _args, ctx) {
-        return ctx.prisma.user
+      resolve(_parent, _args, _ctx) {
+        return prisma.user
           .findUnique({
             where: {
               id: _parent.id,
@@ -30,13 +32,14 @@ const Role = enumType({
   members: ["USER", "ADMIN"],
 });
 
+
 export const UsersQuery = extendType({
   type: "Query",
   definition(t) {
     t.nonNull.list.field("users", {
       type: User,
-      resolve(_parent, _args, ctx) {
-        return ctx.prisma.user.findMany({});
+      async resolve(_parent, _args, ctx) {
+        return prisma.user.findMany({});
       },
     });
   },
@@ -49,7 +52,7 @@ export const UserQuery = extendType({
       type: User,
       args: { id: nonNull(intArg()) },
       resolve(_parent, args, ctx) {
-        return ctx.prisma.user.findUnique({
+        return prisma.user.findUnique({
           where: {
             id: args.id,
           },

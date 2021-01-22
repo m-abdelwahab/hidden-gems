@@ -1,8 +1,9 @@
 import "styles/tailwind.css";
 import { Provider } from "next-auth/client";
 import Layout from "components/Layout";
+import { AppProps } from "next/app";
 
-function MyApp({ Component, pageProps }) {
+function App({ Component, pageProps }: AppProps) {
   return (
     <Provider session={pageProps.session}>
       <Layout>
@@ -12,4 +13,4 @@ function MyApp({ Component, pageProps }) {
   );
 }
 
-export default MyApp;
+export default App;
