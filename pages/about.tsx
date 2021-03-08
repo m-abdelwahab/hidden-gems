@@ -18,14 +18,10 @@ const AboutPage = () => {
           (Code-first GraphQL API)
         </li>
         <li>
-          <a
-            href="https://github.com/maticzav/graphql-shield"
-            rel="noreferrer"
-            target="_blank"
-          >
-            GraphQL-shield
+          <a href="https://www.osohq.com/" rel="noreferrer" target="_blank">
+            OSO
           </a>{" "}
-          (database)
+          (Authorization)
         </li>
         <li>
           <a href="https://tailwindcss.com/" rel="noreferrer" target="_blank">

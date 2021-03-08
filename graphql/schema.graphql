@@ -5,8 +5,9 @@
 type Link {
   category: String
   description: String
-  id: Int
+  id: String
   imageUrl: String
+  index: Int
   title: String
   url: String
   userId: Int
@@ -19,8 +20,8 @@ type Mutation {
 }
 
 type Query {
-  link(id: Int!): Link!
-  links: [Link]!
+  link(id: String!): Link!
+  links(cursor: String, limit: Int, skip: Int): response
   user(id: Int!): User!
   users: [User]!
 }
@@ -37,4 +38,19 @@ type User {
   image: String
   name: String
   role: Role
+}
+
+type edges {
+  cursor: String
+  node: Link
+}
+
+type pageInfo {
+  endCursor: String
+  hasNextPage: Boolean
+}
+
+type response {
+  edges: [edges]
+  pageInfo: pageInfo
 }

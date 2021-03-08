@@ -3,7 +3,6 @@ import { extendType } from "nexus";
 import { Link } from "./Link";
 import prisma from "lib/prisma";
 
-
 export const User = objectType({
   name: "User",
   definition(t) {
@@ -32,14 +31,27 @@ const Role = enumType({
   members: ["USER", "ADMIN"],
 });
 
-
 export const UsersQuery = extendType({
   type: "Query",
   definition(t) {
     t.nonNull.list.field("users", {
       type: User,
       async resolve(_parent, _args, ctx) {
-        return prisma.user.findMany({});
+        // get user id from ctx
+        const user = await ctx.prisma.user.findUnique({
+          where: {
+            id: ctx.user.id,
+          },
+        });
+        const users = await ctx.prisma.user.findMany({});
+        const isAdmin = await ctx.oso.isAllowed(user, null, users);
+        if (!isAdmin) {
+          throw new Error(
+            `You do not have permission to perform action`
+          );
+        }
+
+        return users;
       },
     });
   },

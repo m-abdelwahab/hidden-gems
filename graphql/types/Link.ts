@@ -1,12 +1,10 @@
-import { intArg, nonNull, objectType, stringArg } from "nexus";
-import { extendType } from "nexus";
-import prisma from "lib/prisma";
-
+import { intArg, nonNull, objectType, stringArg, extendType } from "nexus";
 
 export const Link = objectType({
   name: "Link",
   definition(t) {
-    t.int("id");
+    t.string("id");
+    t.int("index");
     t.int("userId");
     t.string("title");
     t.string("url");
@@ -15,14 +13,79 @@ export const Link = objectType({
     t.string("category");
   },
 });
+
+export const Edge = objectType({
+  name: "edges",
+  definition(t) {
+    t.string("cursor");
+    t.field("node", {
+      type: Link,
+    });
+  },
+});
+
+export const PageInfo = objectType({
+  name: "pageInfo",
+  definition(t) {
+    t.string("endCursor");
+    t.boolean("hasNextPage");
+  },
+});
+
+export const Response = objectType({
+  name: "response",
+  definition(t) {
+    t.field("pageInfo", { type: PageInfo });
+    t.list.field("edges", {
+      type: Edge,
+    });
+  },
+});
+
 // get ALl Links
 export const LinksQuery = extendType({
   type: "Query",
   definition(t) {
-    t.nonNull.list.field("links", {
-      type: "Link",
-      resolve(_parent, _args, ctx) {
-        return prisma.link.findMany({});
+    t.field("links", {
+      type: "response",
+      args: {
+        limit: intArg(),
+        skip: intArg(),
+        cursor: stringArg(),
+      },
+      async resolve(_, args, ctx) {
+        const firstQueryResults = await ctx.prisma.link.findMany({
+          take: args.limit,
+          orderBy: {
+            index: "asc",
+          },
+        });
+        const lastLinkInResults = firstQueryResults[3];
+        const myCursor = lastLinkInResults.id;
+
+        const secondQueryResults = await ctx.prisma.link.findMany({
+          take: args.limit,
+          skip: args.skip,
+          cursor: {
+            id: myCursor,
+          },
+          orderBy: {
+            index: "asc",
+          },
+        });
+
+        const result = {
+          pageInfo: {
+            endCursor: myCursor,
+            hasNextPage: args.limit < secondQueryResults.length,
+          },
+          edges: secondQueryResults.map((link) => ({
+            cursor: link.id,
+            node: link,
+          })),
+        };
+
+        return result;
       },
     });
   },
@@ -33,9 +96,9 @@ export const LinkByIDQuery = extendType({
   definition(t) {
     t.nonNull.field("link", {
       type: "Link",
-      args: { id: nonNull(intArg()) },
+      args: { id: nonNull(stringArg()) },
       resolve(_parent, args, ctx) {
-        return prisma.link.findUnique({
+        return ctx.prisma.link.findUnique({
           where: {
             id: args.id,
           },
@@ -50,7 +113,7 @@ export const CreateLinkMutation = extendType({
   type: "Mutation",
   definition(t) {
     t.nonNull.field("createLink", {
-      type: "Link",
+      type: Link,
       args: {
         title: nonNull(stringArg()),
         url: nonNull(stringArg()),
@@ -58,15 +121,26 @@ export const CreateLinkMutation = extendType({
         category: nonNull(stringArg()),
         description: nonNull(stringArg()),
       },
-      resolve(_parent, args, ctx) {
-        return prisma.link.create({
-          data: {
-            title: args.title,
-            url: args.url,
-            imageUrl: args.imageUrl,
-            category: args.category,
-            description: args.description,
+      async resolve(_parent, args, ctx) {
+        const user = await ctx.prisma.user.findUnique({
+          where: {
+            id: ctx.user.id,
           },
+        });
+        const newLink = {
+          title: args.title,
+          url: args.url,
+          imageUrl: args.imageUrl,
+          category: args.category,
+          description: args.description,
+        };
+        const isAdmin = await ctx.oso.isAllowed(user, null, newLink);
+        if (!isAdmin) {
+          throw new Error(`You do not have permission to perform action`);
+        }
+
+        return await ctx.prisma.link.create({
+          data: newLink,
         });
       },
     });
@@ -87,7 +161,7 @@ export const UpdateLinkMutation = extendType({
         description: stringArg(),
       },
       resolve(_parent, args, ctx) {
-        return prisma.link.update({
+        return ctx.prisma.link.update({
           where: { id: args.id },
           data: {
             title: args.title,
@@ -101,7 +175,7 @@ export const UpdateLinkMutation = extendType({
     });
   },
 });
-// delete Link
+// // delete Link
 export const DeleteLinkMutation = extendType({
   type: "Mutation",
   definition(t) {
@@ -111,13 +185,10 @@ export const DeleteLinkMutation = extendType({
         id: nonNull(intArg()),
       },
       resolve(_parent, args, ctx) {
- 
-        return prisma.link.delete({
+        return ctx.prisma.link.delete({
           where: { id: args.id },
         });
       },
     });
   },
 });
-
-

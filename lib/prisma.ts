@@ -1,17 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+let prisma;
 
-export interface Context {
-  prisma: PrismaClient;
-  req: any;
+if (process.env.NODE_ENV === "production") {
+  prisma = new PrismaClient();
 }
-
-export function createContext(req: Context) {
-  return {
-    ...req,
-    prisma,
-  };
+// `stg` or `dev`
+else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient();
+  }
+  prisma = global.prisma;
 }
 
 export default prisma;
