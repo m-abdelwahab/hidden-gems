@@ -12,16 +12,30 @@ const AboutPage = () => {
         </li>
 
         <li>
+          <a
+            href="https://www.apollographql.com/docs/apollo-server/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Apollo Server
+          </a>{" "}
+          (GraphQL server)
+        </li>
+        <li>
+          <a
+            href="https://www.apollographql.com/docs/react/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Apollo Client
+          </a>{" "}
+          (GraphQL client)
+        </li>
+        <li>
           <a href="https://nexusjs.org/" rel="noreferrer" target="_blank">
             Nexus
           </a>{" "}
           (Code-first GraphQL API)
-        </li>
-        <li>
-          <a href="https://www.osohq.com/" rel="noreferrer" target="_blank">
-            OSO
-          </a>{" "}
-          (Authorization)
         </li>
         <li>
           <a href="https://tailwindcss.com/" rel="noreferrer" target="_blank">

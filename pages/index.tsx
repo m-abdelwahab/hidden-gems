@@ -1,14 +1,9 @@
 import Head from "next/head";
-import gql from "graphql-tag";
-import { useState } from "react";
-import { withUrqlClient } from "next-urql";
-import { useQuery } from "urql";
-import { cacheExchange } from "@urql/exchange-graphcache";
-import { relayPagination } from "@urql/exchange-graphcache/extras";
+import { gql, useQuery } from "@apollo/client";
 
 const AllLinksQuery = gql`
-  query allLinksQuery($limit: Int) {
-    links(limit: $limit) {
+  query allLinksQuery($first: Int, $after: String) {
+    links(first: $first, after: $after) {
       pageInfo {
         endCursor
         hasNextPage
@@ -30,25 +25,23 @@ const AllLinksQuery = gql`
 `;
 
 function Home() {
-  const [cursor, setCursor] = useState(null);
-  const [result] = useQuery({
-    query: AllLinksQuery,
-    variables: { cursor: "", limit: 10 },
+  const { data, loading, error, fetchMore } = useQuery(AllLinksQuery, {
+    variables: { first: 2 },
   });
-  const { data, fetching, error } = result;
-  if (fetching) return <p>Loading...</p>;
+
+  if (loading) return <p>Loading...</p>;
   if (error) return <p>Oh no... {error.message}</p>;
 
-  const hasNextPage = data?.links.pageInfo.hasNextPage;
+  const { endCursor, hasNextPage } = data.links.pageInfo;
+
   return (
     <div>
       <Head>
         <title>Hidden Gems</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
       <div className="container mx-auto max-w-5xl my-20">
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {data?.links.edges.map(({ node }) => (
             <li key={node.id} className="shadow  max-w-md  rounded">
               <img src={node.imageUrl} />
@@ -72,12 +65,33 @@ function Home() {
               </div>
             </li>
           ))}
-        </ul>
+        </div>
+        {hasNextPage ? (
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded my-10"
+            onClick={() => {
+              fetchMore({
+                variables: { after: endCursor },
+                updateQuery: (prevResult, { fetchMoreResult }) => {
+                  fetchMoreResult.links.edges = [
+                    ...prevResult.links.edges,
+                    ...fetchMoreResult.links.edges,
+                  ];
+                  return fetchMoreResult;
+                },
+              });
+            }}
+          >
+            more
+          </button>
+        ) : (
+          <p className="my-10 text-center font-medium">
+            You've reached the end!{" "}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-export default withUrqlClient(() => ({
-  url: "http://localhost:3000/api/graphql",
-}))(Home);
+export default Home;

@@ -2,6 +2,11 @@
 ### Do not make changes to this file directly
 
 
+type Edges {
+  cursor: String
+  node: Link
+}
+
 type Link {
   category: String
   description: String
@@ -15,15 +20,25 @@ type Link {
 
 type Mutation {
   createLink(category: String!, description: String!, imageUrl: String!, title: String!, url: String!): Link!
-  deleteLink(id: Int!): Link!
-  updateLink(category: String, description: String, id: Int, imageUrl: String, title: String, url: String): Link!
+  deleteLink(id: String!): Link!
+  updateLink(category: String, description: String, id: String, imageUrl: String, title: String, url: String): Link!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean
 }
 
 type Query {
   link(id: String!): Link!
-  links(cursor: String, limit: Int, skip: Int): response
+  links(after: String, first: Int): Response
   user(id: Int!): User!
   users: [User]!
+}
+
+type Response {
+  edges: [Edges]
+  pageInfo: PageInfo
 }
 
 enum Role {
@@ -38,19 +53,4 @@ type User {
   image: String
   name: String
   role: Role
-}
-
-type edges {
-  cursor: String
-  node: Link
-}
-
-type pageInfo {
-  endCursor: String
-  hasNextPage: Boolean
-}
-
-type response {
-  edges: [edges]
-  pageInfo: pageInfo
 }

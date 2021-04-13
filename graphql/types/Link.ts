@@ -15,7 +15,7 @@ export const Link = objectType({
 });
 
 export const Edge = objectType({
-  name: "edges",
+  name: "Edges",
   definition(t) {
     t.string("cursor");
     t.field("node", {
@@ -25,7 +25,7 @@ export const Edge = objectType({
 });
 
 export const PageInfo = objectType({
-  name: "pageInfo",
+  name: "PageInfo",
   definition(t) {
     t.string("endCursor");
     t.boolean("hasNextPage");
@@ -33,7 +33,7 @@ export const PageInfo = objectType({
 });
 
 export const Response = objectType({
-  name: "response",
+  name: "Response",
   definition(t) {
     t.field("pageInfo", { type: PageInfo });
     t.list.field("edges", {
@@ -47,45 +47,71 @@ export const LinksQuery = extendType({
   type: "Query",
   definition(t) {
     t.field("links", {
-      type: "response",
+      type: "Response",
       args: {
-        limit: intArg(),
-        skip: intArg(),
-        cursor: stringArg(),
+        first: intArg(),
+        after: stringArg(),
       },
       async resolve(_, args, ctx) {
-        const firstQueryResults = await ctx.prisma.link.findMany({
-          take: args.limit,
-          orderBy: {
-            index: "asc",
-          },
-        });
-        const lastLinkInResults = firstQueryResults[3];
-        const myCursor = lastLinkInResults.id;
+        let queryResults = null;
 
-        const secondQueryResults = await ctx.prisma.link.findMany({
-          take: args.limit,
-          skip: args.skip,
-          cursor: {
-            id: myCursor,
-          },
-          orderBy: {
-            index: "asc",
-          },
-        });
+        if (args.after) {
+          queryResults = await ctx.prisma.link.findMany({
+            take: args.first,
+            skip: 1,
+            cursor: {
+              id: args.after,
+            },
+            orderBy: {
+              index: "asc",
+            },
+          });
+        } else {
+          queryResults = await ctx.prisma.link.findMany({
+            take: args.first,
+            orderBy: {
+              index: "asc",
+            },
+          });
+        }
 
-        const result = {
+        if (queryResults.length > 0) {
+          // last element
+          const lastLinkInResults = queryResults[queryResults.length - 1];
+          // cursor we'll return
+          const myCursor = lastLinkInResults.id;
+
+          // queries after the cursor to check if we have nextPage
+          const secondQueryResults = await ctx.prisma.link.findMany({
+            take: args.first,
+            cursor: {
+              id: myCursor,
+            },
+            orderBy: {
+              index: "asc",
+            },
+          });
+
+          const result = {
+            pageInfo: {
+              endCursor: myCursor,
+              hasNextPage: secondQueryResults.length >= args.first,
+            },
+            edges: queryResults.map((link) => ({
+              cursor: link.id,
+              node: link,
+            })),
+          };
+
+          return result;
+        }
+        return {
           pageInfo: {
-            endCursor: myCursor,
-            hasNextPage: args.limit < secondQueryResults.length,
+            endCursor: null,
+            hasNextPage: false,
           },
-          edges: secondQueryResults.map((link) => ({
-            cursor: link.id,
-            node: link,
-          })),
+          edges: [],
         };
-
-        return result;
       },
     });
   },
@@ -134,8 +160,8 @@ export const CreateLinkMutation = extendType({
           category: args.category,
           description: args.description,
         };
-        const isAdmin = await ctx.oso.isAllowed(user, null, newLink);
-        if (!isAdmin) {
+
+        if (user.role !== "ADMIN") {
           throw new Error(`You do not have permission to perform action`);
         }
 
@@ -153,7 +179,7 @@ export const UpdateLinkMutation = extendType({
     t.nonNull.field("updateLink", {
       type: "Link",
       args: {
-        id: intArg(),
+        id: stringArg(),
         title: stringArg(),
         url: stringArg(),
         imageUrl: stringArg(),
@@ -182,7 +208,7 @@ export const DeleteLinkMutation = extendType({
     t.nonNull.field("deleteLink", {
       type: "Link",
       args: {
-        id: nonNull(intArg()),
+        id: nonNull(stringArg()),
       },
       resolve(_parent, args, ctx) {
         return ctx.prisma.link.delete({

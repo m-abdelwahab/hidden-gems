@@ -44,11 +44,8 @@ export const UsersQuery = extendType({
           },
         });
         const users = await ctx.prisma.user.findMany({});
-        const isAdmin = await ctx.oso.isAllowed(user, null, users);
-        if (!isAdmin) {
-          throw new Error(
-            `You do not have permission to perform action`
-          );
+        if (user.role !== "ADMIN") {
+          throw new Error(`You do not have permission to perform action`);
         }
 
         return users;

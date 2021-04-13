@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { getSession, useSession } from "next-auth/client";
-import gql from "graphql-tag";
-import { withUrqlClient } from "next-urql";
-import { useMutation } from "urql";
+import { gql, useMutation } from "@apollo/client";
 import prisma from "lib/prisma";
 
 const CreateLinkMutation = gql`
@@ -31,7 +29,7 @@ const CreateLinkMutation = gql`
 `;
 
 const CreateLink = ({ user }) => {
-  const [createLinkResult, createLink] = useMutation(CreateLinkMutation);
+  const [createLink, { data }] = useMutation(CreateLinkMutation);
 
   const { register, handleSubmit, errors } = useForm();
   const [isCreating, setIsCreating] = useState(false);
@@ -66,9 +64,8 @@ const CreateLink = ({ user }) => {
     const imageUrl = `https://awesome-hidden-gems.s3.amazonaws.com/${image[0].name}`;
     const variables = { title, url, category, description, imageUrl };
     try {
-      const res = await createLink(variables);
+      const res = await createLink({ variables });
 
-      console.log(createLinkResult.fetching);
       console.log(res);
       setIsCreating(false);
     } catch (error) {
@@ -175,9 +172,7 @@ const CreateLink = ({ user }) => {
   );
 };
 
-export default withUrqlClient(() => ({
-  url: "http://localhost:3000/api/graphql",
-}))(CreateLink);
+export default CreateLink;
 
 // TODO: possibly clean this up
 export async function getServerSideProps(context) {

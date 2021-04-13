@@ -12,8 +12,6 @@ const secret = process.env.JWT_SECRET;
 const server = new ApolloServer({
   context: createContext,
   schema,
-  introspection: true,
-
   tracing: process.env.NODE_ENV === "development",
   playground: {
     settings: {
